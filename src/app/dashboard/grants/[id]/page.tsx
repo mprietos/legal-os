@@ -13,6 +13,7 @@ import {
     Loader2,
     Download
 } from 'lucide-react';
+import { PaywallModal } from '@/components/dashboard/paywall-modal';
 
 interface GrantDetail {
     id: string;
@@ -38,7 +39,12 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
     const [item, setItem] = useState<GrantDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
+    const [updating, setUpdating] = useState(false);
     const [generatedDoc, setGeneratedDoc] = useState<string | null>(null);
+
+    // Paywall & Status State
+    const [paywallOpen, setPaywallOpen] = useState(false);
+    const [companyPlan, setCompanyPlan] = useState<string>('free');
 
     useEffect(() => {
         loadGrantItem();
@@ -56,13 +62,18 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
                 .from('company_grants')
                 .select(`
           *,
-          grant:grants(*)
+          grant:grants(*),
+          company:companies(plan)
         `)
                 .eq('id', params.id)
                 .single();
 
             if (error) throw error;
             setItem(data);
+            if (data.company) {
+                // @ts-ignore
+                setCompanyPlan(data.company.plan);
+            }
         } catch (error) {
             console.error('Error loading grant item:', error);
             router.push('/dashboard');
@@ -73,6 +84,12 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
 
     const handleGenerateApplication = async () => {
         if (!item) return;
+
+        // Paywall Check
+        if (companyPlan !== 'pro' && companyPlan !== 'business') {
+            setPaywallOpen(true);
+            return;
+        }
 
         setGenerating(true);
         try {
@@ -106,6 +123,34 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
             alert('Error al generar la solicitud. Inténtalo de nuevo.');
         } finally {
             setGenerating(false);
+        }
+    };
+
+    const updateStatus = async (newStatus: string) => {
+        if (!item) return;
+        setUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('company_grants')
+                .update({ status: newStatus })
+                .eq('id', item.id);
+
+            if (error) throw error;
+
+            console.log(`[Frontend] Grant status updated to ${newStatus}. Refreshing alerts...`);
+
+            // Relanzar alertas
+            await fetch('/api/alerts/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ companyId: item.company_id })
+            });
+
+            setItem(prev => prev ? { ...prev, status: newStatus } : null);
+        } catch (error) {
+            console.error('Error updating status:', error);
+        } finally {
+            setUpdating(false);
         }
     };
 
@@ -237,7 +282,7 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
                                         ) : (
                                             <>
                                                 <FileText className="w-5 h-5 mr-2" />
-                                                Generar Solicitud con IA
+                                                Generar Solicitud
                                             </>
                                         )}
                                     </button>
@@ -257,11 +302,39 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
                                         La IA redactará una memoria técnica personalizada basada en los datos de tu empresa.
                                     </div>
                                 </div>
+
+                                <div className="mt-8 pt-6 border-t border-gray-100">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                        Estado de la Oportunidad
+                                    </label>
+                                    <select
+                                        value={item.status}
+                                        onChange={(e) => updateStatus(e.target.value)}
+                                        disabled={updating}
+                                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm p-3 border text-gray-900 bg-gray-50"
+                                    >
+                                        <option value="opportunity">Nueva Oportunidad</option>
+                                        <option value="in_progress">En proceso</option>
+                                        <option value="submitted">Presentado</option>
+                                        <option value="rejected">No solicitado / Rechazado</option>
+                                    </select>
+                                    <p className="mt-2 text-[10px] text-gray-400">
+                                        Cambiar el estado eliminará la alerta del dashboard principal.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <PaywallModal
+                isOpen={paywallOpen}
+                onClose={() => setPaywallOpen(false)}
+                title="Redacción de Subvenciones con IA"
+                message="Nuestro asistente redacta la memoria técnica completa por ti, maximizando las opciones de éxito. Disponible en planes Pro."
+                potentialValue={item?.grant.max_amount || 0}
+            />
         </div>
     );
 }

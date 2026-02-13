@@ -14,6 +14,7 @@ import {
   Gift,
   AlertCircle,
 } from 'lucide-react';
+import { AlertsFeed } from '@/components/dashboard/alerts-feed';
 
 interface DashboardData {
   company: any;
@@ -116,6 +117,21 @@ export default function DashboardPage() {
     );
   };
 
+  const getGrantStatusBadge = (status: string) => {
+    const badges: Record<string, { label: string; className: string }> = {
+      opportunity: { label: 'Nueva', className: 'bg-blue-100 text-blue-800' },
+      in_progress: { label: 'En proceso', className: 'bg-yellow-100 text-yellow-800' },
+      submitted: { label: 'Presentada', className: 'bg-green-100 text-green-800' },
+      rejected: { label: 'Rechazada', className: 'bg-gray-100 text-gray-800' },
+    };
+    const badge = badges[status] || badges.opportunity;
+    return (
+      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.className}`}>
+        {badge.label}
+      </span>
+    );
+  };
+
   const getSeverityIcon = (severity: string) => {
     if (severity === 'critical' || severity === 'high') {
       return <AlertCircle className="w-5 h-5 text-red-600" />;
@@ -163,6 +179,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AlertsFeed />
         {/* Compliance Score Card */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between">
@@ -291,10 +308,11 @@ export default function DashboardPage() {
                           {item.grant.description}
                         </p>
                       </div>
-                      <div className="text-right ml-4">
+                      <div className="text-right ml-4 flex flex-col items-end gap-1">
                         <div className="text-sm font-medium text-green-600">
                           {item.match_score}% match
                         </div>
+                        {getGrantStatusBadge(item.status)}
                       </div>
                     </div>
 
@@ -316,7 +334,7 @@ export default function DashboardPage() {
                         onClick={() => router.push(`/dashboard/grants/${item.id}`)}
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                       >
-                        Generar solicitud con IA →
+                        Generar solicitud →
                       </button>
                     </div>
                   </div>
