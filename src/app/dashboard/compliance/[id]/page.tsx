@@ -13,6 +13,7 @@ import {
     Loader2,
     ExternalLink
 } from 'lucide-react';
+import { PaywallModal } from '@/components/dashboard/paywall-modal';
 
 interface ComplianceDetail {
     id: string;
@@ -41,6 +42,10 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
     const [updating, setUpdating] = useState(false);
     const [generating, setGenerating] = useState(false);
 
+    // Paywall State
+    const [paywallOpen, setPaywallOpen] = useState(false);
+    const [companyPlan, setCompanyPlan] = useState<string>('free');
+
     useEffect(() => {
         loadComplianceItem();
     }, [params.id]);
@@ -57,13 +62,18 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                 .from('company_compliance')
                 .select(`
           *,
-          requirement:compliance_requirements(*)
+          requirement:compliance_requirements(*),
+          company:companies(plan)
         `)
                 .eq('id', params.id)
                 .single();
 
             if (error) throw error;
             setItem(data);
+            if (data.company) {
+                // @ts-ignore
+                setCompanyPlan(data.company.plan);
+            }
         } catch (error) {
             console.error('Error loading compliance item:', error);
             router.push('/dashboard');
@@ -74,6 +84,12 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
 
     const handleGenerateGuide = async () => {
         if (!item) return;
+
+        // Paywall Check
+        if (companyPlan !== 'pro' && companyPlan !== 'business') {
+            setPaywallOpen(true);
+            return;
+        }
 
         setGenerating(true);
         try {
@@ -128,6 +144,14 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                 const scoreData = await scoreResponse.json();
                 console.log('[Frontend] Recalculate API success:', scoreData);
             }
+
+            // Relanzar alertas
+            console.log(`[Frontend] Refreshing alerts for company: ${item.company_id}`);
+            await fetch('/api/alerts/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ companyId: item.company_id })
+            });
 
             setItem(prev => prev ? { ...prev, status: newStatus } : null);
 
@@ -314,7 +338,7 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                                     ¿Necesitas ayuda?
                                 </h4>
                                 <p className="text-sm text-indigo-700 mb-3">
-                                    Podemos generar una guía de acción detallada y personalizada usando IA.
+                                    Podemos generar una guía de acción detallada y personalizada.
                                 </p>
                                 <button
                                     onClick={handleGenerateGuide}
@@ -337,6 +361,14 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                         </div>
                     </div>
                 </div>
+
+                <PaywallModal
+                    isOpen={paywallOpen}
+                    onClose={() => setPaywallOpen(false)}
+                    title="Guía de Acción con IA"
+                    message="Genera guías paso a paso personalizadas para tu empresa al instante. Disponible en planes Pro."
+                    potentialValue={item?.requirement.severity === 'critical' ? 7500 : 3000}
+                />
             </div>
         </div>
     );
