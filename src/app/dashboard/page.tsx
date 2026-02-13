@@ -4,19 +4,22 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  FileText,
   LogOut,
+  FileText,
+  TrendingUp,
   Building2,
   Gift,
-  AlertCircle,
+  AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 import { AlertsFeed } from '@/components/dashboard/alerts-feed';
 import DebtsTab from '@/components/dashboard/DebtsTab';
-import { ShieldCheck } from 'lucide-react';
+import { DashboardLogo } from '@/components/brand/Logo';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ComplianceScoreCard } from '@/components/compliance/ComplianceScore';
+import { ComplianceTaskCard, ComplianceTasksEmptyState } from '@/components/compliance/ComplianceTaskCard';
+import { GrantCard } from '@/components/grants/GrantCard';
 
 interface DashboardData {
   company: any;
@@ -94,58 +97,10 @@ export default function DashboardPage() {
     router.push('/auth/login');
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getScoreBgColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100';
-    if (score >= 60) return 'bg-yellow-100';
-    return 'bg-red-100';
-  };
-
-  const getStatusBadge = (status: string) => {
-    const badges: Record<string, { label: string; className: string }> = {
-      pending: { label: 'Pendiente', className: 'bg-red-100 text-red-800' },
-      in_progress: { label: 'En proceso', className: 'bg-yellow-100 text-yellow-800' },
-      completed: { label: 'Completado', className: 'bg-green-100 text-green-800' },
-    };
-    const badge = badges[status] || badges.pending;
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.className}`}>
-        {badge.label}
-      </span>
-    );
-  };
-
-  const getGrantStatusBadge = (status: string) => {
-    const badges: Record<string, { label: string; className: string }> = {
-      opportunity: { label: 'Nueva', className: 'bg-blue-100 text-blue-800' },
-      in_progress: { label: 'En proceso', className: 'bg-yellow-100 text-yellow-800' },
-      submitted: { label: 'Presentada', className: 'bg-green-100 text-green-800' },
-      rejected: { label: 'Rechazada', className: 'bg-gray-100 text-gray-800' },
-    };
-    const badge = badges[status] || badges.opportunity;
-    return (
-      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.className}`}>
-        {badge.label}
-      </span>
-    );
-  };
-
-  const getSeverityIcon = (severity: string) => {
-    if (severity === 'critical' || severity === 'high') {
-      return <AlertCircle className="w-5 h-5 text-red-600" />;
-    }
-    return <Clock className="w-5 h-5 text-yellow-600" />;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-os-glass">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
       </div>
     );
   }
@@ -158,76 +113,48 @@ export default function DashboardPage() {
   const score = company.compliance_score || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-os-glass">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 shadow-os">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Building2 className="w-8 h-8 text-blue-600 mr-3" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Legal OS</h1>
+            <div className="flex items-center gap-4">
+              <DashboardLogo href="/dashboard" />
+              <div className="border-l border-gray-200 pl-4">
+                <h1 className="text-xl font-bold text-os-obsidian">Compliance OS</h1>
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-gray-600">{company.name}</p>
                   {company.plan === 'free' && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-800">
+                    <Badge variant="info" size="sm">
                       {company.credits ?? 0} créditos gratuitos
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={LogOut}
               onClick={handleLogout}
-              className="flex items-center text-gray-600 hover:text-gray-900"
             >
-              <LogOut className="w-5 h-5 mr-2" />
               Salir
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AlertsFeed />
-        {/* Compliance Score Card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Compliance Score
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Estado de cumplimiento normativo de tu empresa
-              </p>
-            </div>
-            <div className={`flex items-center justify-center w-24 h-24 rounded-full ${getScoreBgColor(score)}`}>
-              <div className="text-center">
-                <div className={`text-3xl font-bold ${getScoreColor(score)}`}>
-                  {score}
-                </div>
-                <div className={`text-xs ${getScoreColor(score)}`}>/ 100</div>
-              </div>
-            </div>
-          </div>
 
-          {/* Semáforo visual */}
-          <div className="mt-6 flex items-center justify-between">
-            <div className="flex-1">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${score >= 80 ? 'bg-green-600' : score >= 60 ? 'bg-yellow-600' : 'bg-red-600'
-                    }`}
-                  style={{ width: `${score}%` }}
-                />
-              </div>
-            </div>
-            <div className="ml-4 text-sm font-medium">
-              {score >= 80 && <span className="text-green-600">Excelente</span>}
-              {score >= 60 && score < 80 && <span className="text-yellow-600">Mejorable</span>}
-              {score < 60 && <span className="text-red-600">Requiere atención</span>}
-            </div>
-          </div>
+        {/* Compliance Score Card - Nuevo componente */}
+        <div className="mb-8 animate-fade-in">
+          <ComplianceScoreCard
+            score={score}
+            previousScore={company.previous_compliance_score}
+            title="Compliance Score"
+            subtitle="Estado de cumplimiento normativo de tu empresa"
+          />
         </div>
 
         {/* Tab Navigation */}
@@ -254,127 +181,71 @@ export default function DashboardPage() {
         </div>
 
         {activeTab === 'overview' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-500">
+          <div className="bento-grid animate-fade-in md:grid-cols-2">
             {/* Tareas de Compliance */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Tareas de Compliance
-                </h2>
-                <AlertTriangle className="w-6 h-6 text-orange-600" />
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-os-lg shadow-os-md p-6 mb-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-os-obsidian">
+                    Tareas de Compliance
+                  </h2>
+                  <AlertTriangle className="w-6 h-6 text-compliance-warning-text icon-linear" />
+                </div>
+
+                {complianceItems.length === 0 ? (
+                  <ComplianceTasksEmptyState />
+                ) : (
+                  <div className="space-y-4">
+                    {complianceItems.map((item) => (
+                      <ComplianceTaskCard
+                        key={item.id}
+                        id={item.id}
+                        requirement={item.requirement}
+                        status={item.status}
+                        dueDate={item.due_date}
+                        onViewDetails={() => router.push(`/dashboard/compliance/${item.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {complianceItems.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-600" />
-                  <p>¡Todo en orden! No hay tareas pendientes.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {complianceItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-start">
-                          {getSeverityIcon(item.requirement.severity)}
-                          <div className="ml-3">
-                            <h3 className="font-semibold text-gray-900">
-                              {item.requirement.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {item.requirement.description}
-                            </p>
-                          </div>
-                        </div>
-                        {getStatusBadge(item.status)}
-                      </div>
-
-                      {item.due_date && (
-                        <div className="flex items-center text-sm text-gray-500 mt-3">
-                          <Clock className="w-4 h-4 mr-1" />
-                          Vencimiento: {new Date(item.due_date).toLocaleDateString('es-ES')}
-                        </div>
-                      )}
-
-                      <div className="mt-3">
-                        <button
-                          onClick={() => router.push(`/dashboard/compliance/${item.id}`)}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                          Ver detalles →
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Subvenciones disponibles */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Subvenciones Disponibles
-                </h2>
-                <Gift className="w-6 h-6 text-green-600" />
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-os-lg shadow-os-md p-6 mb-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-os-obsidian">
+                    Subvenciones Disponibles
+                  </h2>
+                  <Gift className="w-6 h-6 text-compliance-success-text icon-linear" />
+                </div>
+
+                {grants.length === 0 ? (
+                  <div className="text-center py-12">
+                    <TrendingUp className="w-16 h-16 mx-auto mb-4 text-primary-500" />
+                    <h3 className="text-lg font-semibold text-os-obsidian mb-2">
+                      Buscando oportunidades
+                    </h3>
+                    <p className="text-gray-600">
+                      Analizando subvenciones disponibles para tu empresa...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {grants.map((item) => (
+                      <GrantCard
+                        key={item.id}
+                        grant={item.grant}
+                        matchScore={item.match_score}
+                        status={item.status}
+                        onApply={() => router.push(`/dashboard/grants/${item.id}`)}
+                        onViewDetails={() => router.push(`/dashboard/grants/${item.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {grants.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                  <p>Buscando oportunidades para tu empresa...</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {grants.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {item.grant.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {item.grant.description}
-                          </p>
-                        </div>
-                        <div className="text-right ml-4 flex flex-col items-end gap-1">
-                          <div className="text-sm font-medium text-green-600">
-                            {item.match_score}% match
-                          </div>
-                          {getGrantStatusBadge(item.status)}
-                        </div>
-                      </div>
-
-                      {item.grant.max_amount && (
-                        <div className="flex items-center text-sm font-medium text-gray-900 mt-3">
-                          <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                          Hasta {item.grant.max_amount.toLocaleString('es-ES')} €
-                        </div>
-                      )}
-
-                      {item.grant.application_deadline && (
-                        <div className="text-sm text-gray-500 mt-2">
-                          Plazo: {new Date(item.grant.application_deadline).toLocaleDateString('es-ES')}
-                        </div>
-                      )}
-
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={() => router.push(`/dashboard/grants/${item.id}`)}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                          Generar solicitud →
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         ) : (
@@ -387,29 +258,59 @@ export default function DashboardPage() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <button
             onClick={() => router.push('/dashboard/documents')}
-            className="bg-blue-600 text-white p-6 rounded-lg hover:bg-blue-700 transition-colors text-left"
+            className="bento-card text-left group hover:-translate-y-1 transition-all duration-300"
           >
-            <FileText className="w-8 h-8 mb-3" />
-            <h3 className="font-semibold text-lg mb-1">Generar Documentos</h3>
-            <p className="text-sm text-blue-100">Crea documentos de compliance</p>
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary-50 rounded-os-lg group-hover:bg-primary-100 transition-colors">
+                <FileText className="w-8 h-8 text-primary-600 icon-linear" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1 text-os-obsidian group-hover:text-primary-600 transition-colors">
+                  Generar Documentos
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Crea documentos de compliance con IA
+                </p>
+              </div>
+            </div>
           </button>
 
           <button
             onClick={() => router.push('/dashboard/grants')}
-            className="bg-green-600 text-white p-6 rounded-lg hover:bg-green-700 transition-colors text-left"
+            className="bento-card text-left group hover:-translate-y-1 transition-all duration-300"
           >
-            <TrendingUp className="w-8 h-8 mb-3" />
-            <h3 className="font-semibold text-lg mb-1">Ver todas las ayudas</h3>
-            <p className="text-sm text-green-100">Explora más oportunidades de financiación</p>
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-compliance-success-bg rounded-os-lg group-hover:bg-compliance-success-border transition-colors">
+                <TrendingUp className="w-8 h-8 text-compliance-success-text icon-linear" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1 text-os-obsidian group-hover:text-compliance-success-text transition-colors">
+                  Ver todas las ayudas
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Explora más oportunidades de financiación
+                </p>
+              </div>
+            </div>
           </button>
 
           <button
             onClick={() => router.push('/dashboard/settings')}
-            className="bg-purple-600 text-white p-6 rounded-lg hover:bg-purple-700 transition-colors text-left"
+            className="bento-card text-left group hover:-translate-y-1 transition-all duration-300"
           >
-            <Building2 className="w-8 h-8 mb-3" />
-            <h3 className="font-semibold text-lg mb-1">Configurar Empresa</h3>
-            <p className="text-sm text-purple-100">Actualiza los datos de tu empresa</p>
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-secondary-50 rounded-os-lg group-hover:bg-secondary-100 transition-colors">
+                <Building2 className="w-8 h-8 text-secondary-500 icon-linear" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1 text-os-obsidian group-hover:text-secondary-600 transition-colors">
+                  Configurar Empresa
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Actualiza los datos de tu empresa
+                </p>
+              </div>
+            </div>
           </button>
         </div>
       </main>

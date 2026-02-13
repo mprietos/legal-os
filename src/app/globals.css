@@ -3,25 +3,67 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8FAFC;
+  --foreground: #1E293B;
+  --os-deep-space: #0A1128;
+  --os-neon-mint: #00F5A0;
+  --os-glass: #F8FAFC;
+  --os-obsidian: #1E293B;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-os-glass text-os-obsidian;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans font-semibold;
+  }
+
+  /* Glassmorphism utility */
+  .glass {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Linear Icons style - thin stroke */
+  .icon-linear {
+    stroke-width: 1.5px;
+  }
+
+  /* Mesh Gradient for hero sections */
+  .mesh-gradient {
+    background: linear-gradient(135deg, #0A1128 0%, #0F1F3D 25%, #0A1128 50%, #0C1830 75%, #0A1128 100%);
+    background-size: 400% 400%;
+    animation: meshMove 15s ease infinite;
+  }
+
+  @keyframes meshMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Bento Grid Layout */
+  .bento-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  .bento-card {
+    @apply bg-white rounded-os-lg shadow-os-md p-6 transition-all duration-300 hover:shadow-os-lg;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Safe area for logo */
+  .logo-safe-area {
+    padding: calc(1em); /* Height of "C" equivalent */
   }
 }
