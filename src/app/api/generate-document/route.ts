@@ -21,6 +21,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // --- CREDIT SYSTEM LOGIC ---
+    const isFreePlan = company.plan === 'free';
+    const credits = company.credits ?? 0;
+
+    if (isFreePlan && credits <= 0) {
+      return NextResponse.json(
+        {
+          error: 'Créditos insuficientes',
+          message: 'Has agotado tus 3 créditos gratuitos. Pásate a PRO para generación ilimitada.',
+          code: 'INSUFFICIENT_CREDITS'
+        },
+        { status: 402 } // Payment Required
+      );
+    }
+    // ---------------------------
+
     let documentContent = '';
     let documentTitle = '';
     let relatedGrantId = null;
@@ -120,9 +136,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // --- UPDATE CREDITS IF FREE PLAN ---
+    if (isFreePlan) {
+      await supabaseAdmin
+        .from('companies')
+        .update({ credits: credits - 1 })
+        .eq('id', companyId);
+    }
+    // ------------------------------------
+
     return NextResponse.json({
       success: true,
       document: savedDocument,
+      remainingCredits: isFreePlan ? credits - 1 : null
     });
   } catch (error: any) {
     console.error('Error generating document:', error);

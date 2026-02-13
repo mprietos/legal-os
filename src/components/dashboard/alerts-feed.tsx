@@ -13,6 +13,7 @@ export function AlertsFeed() {
     const [loading, setLoading] = useState(true);
     const [paywallOpen, setPaywallOpen] = useState(false);
     const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+    const [companyInfo, setCompanyInfo] = useState<{ plan: string, credits: number } | null>(null);
 
     useEffect(() => {
         loadAlerts();
@@ -38,10 +39,15 @@ export function AlertsFeed() {
             // Get user's companies first
             const { data: companies } = await supabase
                 .from('companies')
-                .select('id')
+                .select('id, plan, credits')
                 .eq('owner_id', user.id);
 
             if (!companies?.length) return;
+
+            setCompanyInfo({
+                plan: companies[0].plan,
+                credits: companies[0].credits
+            });
 
             const companyIds = companies.map(c => c.id);
 
@@ -76,7 +82,7 @@ export function AlertsFeed() {
     };
 
     const handleAction = (alert: Alert) => {
-        if (alert.is_premium) {
+        if (alert.is_premium && companyInfo?.plan === 'free') {
             setSelectedAlert(alert);
             setPaywallOpen(true);
         } else {
@@ -170,6 +176,13 @@ export function AlertsFeed() {
                 title={selectedAlert?.title || ''}
                 message={selectedAlert?.teaser_message || null}
                 potentialValue={selectedAlert?.economic_impact}
+                credits={companyInfo?.credits}
+                onUseCredit={() => {
+                    if (selectedAlert) {
+                        setPaywallOpen(false);
+                        router.push(selectedAlert.cta_target);
+                    }
+                }}
             />
         </>
     );

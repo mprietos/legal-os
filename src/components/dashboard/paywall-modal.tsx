@@ -8,9 +8,11 @@ interface PaywallModalProps {
     title: string;
     message: string | null;
     potentialValue?: number;
+    credits?: number | null;
+    onUseCredit?: () => void;
 }
 
-export function PaywallModal({ isOpen, onClose, title, message, potentialValue }: PaywallModalProps) {
+export function PaywallModal({ isOpen, onClose, title, message, potentialValue, credits, onUseCredit }: PaywallModalProps) {
     if (!isOpen) return null;
 
     return (
@@ -41,7 +43,10 @@ export function PaywallModal({ isOpen, onClose, title, message, potentialValue }
                 <div className="p-8">
                     <div className="text-center mb-8">
                         <p className="text-gray-600 text-lg leading-relaxed">
-                            {message || "Esta funcionalidad está reservada para usuarios Pro."}
+                            {credits !== undefined && credits !== null && credits > 0
+                                ? "Puedes usar uno de tus créditos gratuitos para desbloquear esta solución ahora mismo."
+                                : (message || "Esta funcionalidad está reservada para usuarios Pro.")
+                            }
                         </p>
 
                         {potentialValue && potentialValue > 0 && (
@@ -55,12 +60,22 @@ export function PaywallModal({ isOpen, onClose, title, message, potentialValue }
                     </div>
 
                     <div className="space-y-3">
-                        <button
-                            onClick={() => alert('Redirect to Stripe/Payment')}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-200"
-                        >
-                            Actualizar a PRO ahora
-                        </button>
+                        {credits !== undefined && credits !== null && credits > 0 ? (
+                            <button
+                                onClick={onUseCredit}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                            >
+                                <Sparkles className="w-5 h-5" />
+                                Usar 1 crédito ({credits} disponibles)
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => alert('Redirect to Stripe/Payment')}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-200"
+                            >
+                                Actualizar a PRO ahora
+                            </button>
+                        )}
                         <button
                             onClick={onClose}
                             className="w-full bg-white hover:bg-gray-50 text-gray-500 font-medium py-3 px-6 rounded-xl transition-colors"

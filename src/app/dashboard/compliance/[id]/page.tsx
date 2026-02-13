@@ -11,7 +11,8 @@ import {
     Clock,
     FileText,
     Loader2,
-    ExternalLink
+    ExternalLink,
+    TrendingUp
 } from 'lucide-react';
 import { PaywallModal } from '@/components/dashboard/paywall-modal';
 
@@ -45,6 +46,7 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
     // Paywall State
     const [paywallOpen, setPaywallOpen] = useState(false);
     const [companyPlan, setCompanyPlan] = useState<string>('free');
+    const [credits, setCredits] = useState<number | null>(null);
 
     useEffect(() => {
         loadComplianceItem();
@@ -63,7 +65,7 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                 .select(`
           *,
           requirement:compliance_requirements(*),
-          company:companies(plan)
+          company:companies(plan, credits)
         `)
                 .eq('id', params.id)
                 .single();
@@ -73,6 +75,8 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
             if (data.company) {
                 // @ts-ignore
                 setCompanyPlan(data.company.plan);
+                // @ts-ignore
+                setCredits(data.company.credits);
             }
         } catch (error) {
             console.error('Error loading compliance item:', error);
@@ -86,7 +90,8 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
         if (!item) return;
 
         // Paywall Check
-        if (companyPlan !== 'pro' && companyPlan !== 'business') {
+        // Paywall Check - Allow if PRO/Business OR if FREE with credits
+        if (companyPlan === 'free' && (credits === null || credits <= 0)) {
             setPaywallOpen(true);
             return;
         }
@@ -105,7 +110,12 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
 
             if (!response.ok) throw new Error('Error generando documento');
 
-            await response.json();
+            const data = await response.json();
+            if (data.remainingCredits !== undefined) {
+                setCredits(data.remainingCredits);
+            }
+
+            // Redirigir a la vista de documentos
 
             // Redirigir a la vista de documentos
             router.push('/dashboard/documents');
@@ -338,17 +348,31 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                                     ¿Necesitas ayuda?
                                 </h4>
                                 <p className="text-sm text-indigo-700 mb-3">
-                                    Podemos generar una guía de acción detallada y personalizada.
+                                    {companyPlan === 'free' ? (
+                                        credits !== null && credits > 0
+                                            ? `Podemos generar una guía de acción detallada. Te quedan ${credits} créditos.`
+                                            : 'Has agotado tus créditos gratuitos. Pásate a PRO para generar guías ilimitadas.'
+                                    ) : (
+                                        'Podemos generar una guía de acción detallada y personalizada.'
+                                    )}
                                 </p>
                                 <button
                                     onClick={handleGenerateGuide}
                                     disabled={generating}
-                                    className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center font-bold"
+                                    className={`w-full py-2 px-4 ${companyPlan === 'free' && (credits === null || credits <= 0)
+                                        ? 'bg-amber-600 hover:bg-amber-700'
+                                        : 'bg-indigo-600 hover:bg-indigo-700'
+                                        } disabled:bg-indigo-300 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center font-bold`}
                                 >
                                     {generating ? (
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                             Generando...
+                                        </>
+                                    ) : companyPlan === 'free' && (credits === null || credits <= 0) ? (
+                                        <>
+                                            <TrendingUp className="w-4 h-4 mr-2" />
+                                            Pasar a PRO para generar
                                         </>
                                     ) : (
                                         <>

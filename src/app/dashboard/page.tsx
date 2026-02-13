@@ -164,7 +164,14 @@ export default function DashboardPage() {
               <Building2 className="w-8 h-8 text-blue-600 mr-3" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Legal OS</h1>
-                <p className="text-sm text-gray-600">{company.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-600">{company.name}</p>
+                  {company.plan === 'free' && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-800">
+                      {company.credits ?? 0} créditos gratuitos
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <button

@@ -11,7 +11,8 @@ import {
     FileText,
     Building2,
     Loader2,
-    Download
+    Download,
+    TrendingUp
 } from 'lucide-react';
 import { PaywallModal } from '@/components/dashboard/paywall-modal';
 
@@ -45,6 +46,7 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
     // Paywall & Status State
     const [paywallOpen, setPaywallOpen] = useState(false);
     const [companyPlan, setCompanyPlan] = useState<string>('free');
+    const [credits, setCredits] = useState<number | null>(null);
 
     useEffect(() => {
         loadGrantItem();
@@ -63,7 +65,7 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
                 .select(`
           *,
           grant:grants(*),
-          company:companies(plan)
+          company:companies(plan, credits)
         `)
                 .eq('id', params.id)
                 .single();
@@ -73,6 +75,8 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
             if (data.company) {
                 // @ts-ignore
                 setCompanyPlan(data.company.plan);
+                // @ts-ignore
+                setCredits(data.company.credits);
             }
         } catch (error) {
             console.error('Error loading grant item:', error);
@@ -86,7 +90,8 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
         if (!item) return;
 
         // Paywall Check
-        if (companyPlan !== 'pro' && companyPlan !== 'business') {
+        // Paywall Check - Allow if PRO/Business OR if FREE with credits
+        if (companyPlan === 'free' && (credits === null || credits <= 0)) {
             setPaywallOpen(true);
             return;
         }
@@ -107,6 +112,12 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
 
             const data = await response.json();
             setGeneratedDoc(data.documentId);
+
+            if (data.remainingCredits !== undefined) {
+                setCredits(data.remainingCredits);
+            }
+
+            // Actualizar estado a 'in_progress'
 
             // Actualizar estado a 'in_progress'
             await supabase
@@ -266,13 +277,21 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
                                 <div className="space-y-4">
                                     <button
                                         onClick={handleGenerateApplication}
-                                        disabled={generating || item.status !== 'opportunity'}
-                                        className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center transform hover:scale-[1.02]"
+                                        disabled={generating || (item.status !== 'opportunity' && item.status !== 'in_progress')}
+                                        className={`w-full py-3 px-4 ${companyPlan === 'free' && (credits === null || credits <= 0) && item.status === 'opportunity'
+                                            ? 'bg-amber-600 hover:bg-amber-700'
+                                            : 'bg-green-600 hover:bg-green-700'
+                                            } disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center transform hover:scale-[1.02]`}
                                     >
                                         {generating ? (
                                             <>
                                                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
                                                 Generando...
+                                            </>
+                                        ) : companyPlan === 'free' && (credits === null || credits <= 0) && item.status === 'opportunity' ? (
+                                            <>
+                                                <TrendingUp className="w-5 h-5 mr-2" />
+                                                Pasar a PRO para generar
                                             </>
                                         ) : item.status === 'in_progress' ? (
                                             <>
@@ -299,7 +318,13 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
                                     )}
 
                                     <div className="text-xs text-center text-gray-500 mt-4">
-                                        La IA redactará una memoria técnica personalizada basada en los datos de tu empresa.
+                                        {companyPlan === 'free' ? (
+                                            credits !== null && credits > 0
+                                                ? `La IA redactará una memoria técnica personalizada. Te quedan ${credits} créditos.`
+                                                : 'Has agotado tus créditos. Pásate a PRO para redactar memorias ilimitadas.'
+                                        ) : (
+                                            'La IA redactará una memoria técnica personalizada basada en los datos de tu empresa.'
+                                        )}
                                     </div>
                                 </div>
 

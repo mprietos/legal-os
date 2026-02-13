@@ -28,6 +28,7 @@ export interface Database {
           plan: 'free' | 'pro' | 'business'
           owner_id: string | null
           managed_by: string | null
+          credits: number
         }
         Insert: {
           id?: string
@@ -47,6 +48,7 @@ export interface Database {
           plan?: 'free' | 'pro' | 'business'
           owner_id?: string | null
           managed_by?: string | null
+          credits?: number
         }
         Update: {
           id?: string
@@ -66,6 +68,7 @@ export interface Database {
           plan?: 'free' | 'pro' | 'business'
           owner_id?: string | null
           managed_by?: string | null
+          credits?: number
         }
       }
       compliance_requirements: {
@@ -152,6 +155,35 @@ export interface Database {
           generation_prompt: string | null
           version: number
           is_final: boolean
+        }
+      }
+      scoring_rules: {
+        Row: {
+          id: string
+          created_at: string
+          rule_type: string
+          weight: number
+          config: Json | null
+          is_active: boolean
+          description: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          rule_type: string
+          weight?: number
+          config?: Json | null
+          is_active?: boolean
+          description?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          rule_type?: string
+          weight?: number
+          config?: Json | null
+          is_active?: boolean
+          description?: string | null
         }
       }
     }
