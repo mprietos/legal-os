@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AlertsEngine } from '@/lib/alerts/engine';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
     try {

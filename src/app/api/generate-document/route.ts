@@ -89,11 +89,11 @@ export async function POST(request: NextRequest) {
         .select('*, requirement:compliance_requirements(*)')
         .eq('company_id', companyId);
 
-      const completed = complianceItems?.filter(i => i.status === 'completed').length || 0;
-      const pending = complianceItems?.filter(i => i.status === 'pending').length || 0;
+      const completed = complianceItems?.filter((i: any) => i.status === 'completed').length || 0;
+      const pending = complianceItems?.filter((i: any) => i.status === 'pending').length || 0;
       const critical = complianceItems
-        ?.filter(i => i.status === 'pending' && (i.requirement as any)?.severity === 'critical')
-        .map(i => (i.requirement as any)?.title) || [];
+        ?.filter((i: any) => i.status === 'pending' && (i.requirement as any)?.severity === 'critical')
+        .map((i: any) => (i.requirement as any)?.title) || [];
 
       documentContent = await DocumentGenerator.generateComplianceReport(
         company,
