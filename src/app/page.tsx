@@ -169,7 +169,7 @@ export default function HomePage() {
       <footer className="border-t border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 text-sm">
-            © 2024 Legal OS. Sistema de Cumplimiento para PYMEs.
+            © 2026 Compliance OS. Sistema de Cumplimiento para PYMEs.
           </div>
         </div>
       </footer>
