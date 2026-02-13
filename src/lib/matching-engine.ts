@@ -273,7 +273,7 @@ export class MatchingEngine {
 
     const totalCount = items.length;
     const completedCount = items.filter(
-      item => item.status === 'completed' || item.status === 'not_applicable'
+      (item: any) => item.status === 'completed' || item.status === 'not_applicable'
     ).length;
 
     console.log(`[MatchingEngine] Stats - Total: ${totalCount}, Completed: ${completedCount}`);
