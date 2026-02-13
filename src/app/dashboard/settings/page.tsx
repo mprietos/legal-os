@@ -26,6 +26,8 @@ interface Company {
     annual_revenue: number | null;
     country: string;
     region: string | null;
+    cnae_code: string | null;
+    cnae_description: string | null;
 }
 
 export default function SettingsPage() {
@@ -80,7 +82,9 @@ export default function SettingsPage() {
                     company_size: company.company_size,
                     employee_count: company.employee_count,
                     annual_revenue: company.annual_revenue,
-                    region: company.region
+                    region: company.region,
+                    cnae_code: company.cnae_code,
+                    cnae_description: company.cnae_description
                 })
                 .eq('id', company.id);
 
@@ -222,6 +226,30 @@ export default function SettingsPage() {
                                             <option value="small">Pequeña (10-49 empleados)</option>
                                             <option value="medium">Mediana (50-249 empleados)</option>
                                         </select>
+                                    </div>
+                                    <div className="col-span-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Código CNAE
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={company.cnae_code || ''}
+                                            onChange={(e) => updateField('cnae_code', e.target.value)}
+                                            placeholder="6201"
+                                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-gray-900"
+                                        />
+                                    </div>
+                                    <div className="col-span-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Descripción CNAE
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={company.cnae_description || ''}
+                                            onChange={(e) => updateField('cnae_description', e.target.value)}
+                                            placeholder="Actividades de programación..."
+                                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-gray-900"
+                                        />
                                     </div>
                                 </div>
                             </div>

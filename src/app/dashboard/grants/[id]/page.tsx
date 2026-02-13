@@ -356,7 +356,7 @@ export default function GrantDetailPage({ params }: { params: { id: string } }) 
             <PaywallModal
                 isOpen={paywallOpen}
                 onClose={() => setPaywallOpen(false)}
-                title="Redacción de Subvenciones con IA"
+                title="Redacción de Subvenciones"
                 message="Nuestro asistente redacta la memoria técnica completa por ti, maximizando las opciones de éxito. Disponible en planes Pro."
                 potentialValue={item?.grant.max_amount || 0}
             />

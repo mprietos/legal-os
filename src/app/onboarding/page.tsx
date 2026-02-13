@@ -198,11 +198,10 @@ export default function OnboardingPage() {
                         key={size.value}
                         type="button"
                         onClick={() => updateField('company_size', size.value)}
-                        className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                          formData.company_size === size.value
+                        className={`p-4 border-2 rounded-lg text-center transition-colors ${formData.company_size === size.value
                             ? 'border-blue-600 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                          }`}
                       >
                         <div className="font-medium text-gray-900">{size.label}</div>
                         <div className="text-xs text-gray-500 mt-1">{size.desc}</div>
@@ -249,6 +248,33 @@ export default function OnboardingPage() {
                     placeholder="Madrid, Cataluña, etc."
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Código CNAE (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cnae_code || ''}
+                      onChange={(e) => updateField('cnae_code', e.target.value)}
+                      placeholder="6201"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Descripción CNAE (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cnae_description || ''}
+                      onChange={(e) => updateField('cnae_description', e.target.value)}
+                      placeholder="Actividades de programación informática"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex gap-4">

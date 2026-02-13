@@ -389,7 +389,7 @@ export default function ComplianceDetailPage({ params }: { params: { id: string 
                 <PaywallModal
                     isOpen={paywallOpen}
                     onClose={() => setPaywallOpen(false)}
-                    title="Guía de Acción con IA"
+                    title="Guía de Acción"
                     message="Genera guías paso a paso personalizadas para tu empresa al instante. Disponible en planes Pro."
                     potentialValue={item?.requirement.severity === 'critical' ? 7500 : 3000}
                 />

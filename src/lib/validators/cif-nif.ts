@@ -66,6 +66,8 @@ export const onboardingSchema = z.object({
   annual_revenue: z.number().min(0, 'Facturación no válida').optional(),
   country: z.string().length(2, 'Código de país no válido'),
   region: z.string().optional(),
+  cnae_code: z.string().optional(),
+  cnae_description: z.string().optional(),
 });
 
 export type OnboardingData = z.infer<typeof onboardingSchema>;

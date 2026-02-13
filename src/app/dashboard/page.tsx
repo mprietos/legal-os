@@ -15,6 +15,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { AlertsFeed } from '@/components/dashboard/alerts-feed';
+import DebtsTab from '@/components/dashboard/DebtsTab';
+import { ShieldCheck } from 'lucide-react';
 
 interface DashboardData {
   company: any;
@@ -26,6 +28,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'debts'>('overview');
 
   useEffect(() => {
     router.refresh();
@@ -227,129 +230,158 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Tareas de Compliance */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">
-                Tareas de Compliance
-              </h2>
-              <AlertTriangle className="w-6 h-6 text-orange-600" />
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200 mb-8">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'overview'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Vista General
+          </button>
+          <button
+            onClick={() => setActiveTab('debts')}
+            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'debts'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Deudas y Sanciones
+          </button>
+        </div>
+
+        {activeTab === 'overview' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-500">
+            {/* Tareas de Compliance */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Tareas de Compliance
+                </h2>
+                <AlertTriangle className="w-6 h-6 text-orange-600" />
+              </div>
+
+              {complianceItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-600" />
+                  <p>¡Todo en orden! No hay tareas pendientes.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {complianceItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start">
+                          {getSeverityIcon(item.requirement.severity)}
+                          <div className="ml-3">
+                            <h3 className="font-semibold text-gray-900">
+                              {item.requirement.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {item.requirement.description}
+                            </p>
+                          </div>
+                        </div>
+                        {getStatusBadge(item.status)}
+                      </div>
+
+                      {item.due_date && (
+                        <div className="flex items-center text-sm text-gray-500 mt-3">
+                          <Clock className="w-4 h-4 mr-1" />
+                          Vencimiento: {new Date(item.due_date).toLocaleDateString('es-ES')}
+                        </div>
+                      )}
+
+                      <div className="mt-3">
+                        <button
+                          onClick={() => router.push(`/dashboard/compliance/${item.id}`)}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Ver detalles →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {complianceItems.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-600" />
-                <p>¡Todo en orden! No hay tareas pendientes.</p>
+            {/* Subvenciones disponibles */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Subvenciones Disponibles
+                </h2>
+                <Gift className="w-6 h-6 text-green-600" />
               </div>
-            ) : (
-              <div className="space-y-4">
-                {complianceItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-start">
-                        {getSeverityIcon(item.requirement.severity)}
-                        <div className="ml-3">
+
+              {grants.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                  <p>Buscando oportunidades para tu empresa...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {grants.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
                           <h3 className="font-semibold text-gray-900">
-                            {item.requirement.title}
+                            {item.grant.title}
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">
-                            {item.requirement.description}
+                            {item.grant.description}
                           </p>
                         </div>
-                      </div>
-                      {getStatusBadge(item.status)}
-                    </div>
-
-                    {item.due_date && (
-                      <div className="flex items-center text-sm text-gray-500 mt-3">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Vencimiento: {new Date(item.due_date).toLocaleDateString('es-ES')}
-                      </div>
-                    )}
-
-                    <div className="mt-3">
-                      <button
-                        onClick={() => router.push(`/dashboard/compliance/${item.id}`)}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Ver detalles →
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Subvenciones disponibles */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">
-                Subvenciones Disponibles
-              </h2>
-              <Gift className="w-6 h-6 text-green-600" />
-            </div>
-
-            {grants.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                <p>Buscando oportunidades para tu empresa...</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {grants.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {item.grant.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {item.grant.description}
-                        </p>
-                      </div>
-                      <div className="text-right ml-4 flex flex-col items-end gap-1">
-                        <div className="text-sm font-medium text-green-600">
-                          {item.match_score}% match
+                        <div className="text-right ml-4 flex flex-col items-end gap-1">
+                          <div className="text-sm font-medium text-green-600">
+                            {item.match_score}% match
+                          </div>
+                          {getGrantStatusBadge(item.status)}
                         </div>
-                        {getGrantStatusBadge(item.status)}
+                      </div>
+
+                      {item.grant.max_amount && (
+                        <div className="flex items-center text-sm font-medium text-gray-900 mt-3">
+                          <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
+                          Hasta {item.grant.max_amount.toLocaleString('es-ES')} €
+                        </div>
+                      )}
+
+                      {item.grant.application_deadline && (
+                        <div className="text-sm text-gray-500 mt-2">
+                          Plazo: {new Date(item.grant.application_deadline).toLocaleDateString('es-ES')}
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => router.push(`/dashboard/grants/${item.id}`)}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Generar solicitud →
+                        </button>
                       </div>
                     </div>
-
-                    {item.grant.max_amount && (
-                      <div className="flex items-center text-sm font-medium text-gray-900 mt-3">
-                        <TrendingUp className="w-4 h-4 mr-1 text-green-600" />
-                        Hasta {item.grant.max_amount.toLocaleString('es-ES')} €
-                      </div>
-                    )}
-
-                    {item.grant.application_deadline && (
-                      <div className="text-sm text-gray-500 mt-2">
-                        Plazo: {new Date(item.grant.application_deadline).toLocaleDateString('es-ES')}
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => router.push(`/dashboard/grants/${item.id}`)}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Generar solicitud →
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <DebtsTab companyId={company.id} />
+          </div>
+        )}
 
         {/* Acciones rápidas */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -359,7 +391,7 @@ export default function DashboardPage() {
           >
             <FileText className="w-8 h-8 mb-3" />
             <h3 className="font-semibold text-lg mb-1">Generar Documentos</h3>
-            <p className="text-sm text-blue-100">Crea documentos de compliance con IA</p>
+            <p className="text-sm text-blue-100">Crea documentos de compliance</p>
           </button>
 
           <button

@@ -42,7 +42,7 @@ export default function HomePage() {
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="text-3xl font-bold text-blue-600 mb-2">100%</div>
-              <div className="text-gray-600">Automatizado con IA</div>
+              <div className="text-gray-600">Automatizado</div>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="text-3xl font-bold text-blue-600 mb-2">0€</div>
@@ -94,7 +94,7 @@ export default function HomePage() {
               <FileText className="w-6 h-6 text-orange-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Documentos con IA
+              Documentos
             </h3>
             <p className="text-gray-600 text-sm">
               Genera solicitudes, políticas y reportes personalizados con Claude AI

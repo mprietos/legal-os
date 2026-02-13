@@ -39,10 +39,20 @@ interface GrantOpportunity {
     };
 }
 
+interface AISuggestion {
+    title: string;
+    issuer: string;
+    description: string;
+    estimated_amount: string;
+    match_reason: string;
+}
+
 export default function GrantsPage() {
     const router = useRouter();
     const [grants, setGrants] = useState<GrantOpportunity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [discovering, setDiscovering] = useState(false);
+    const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
 
     useEffect(() => {
         loadGrants();
@@ -79,6 +89,37 @@ export default function GrantsPage() {
             console.error('Error loading grants:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const discoverNewGrants = async () => {
+        setDiscovering(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: company } = await supabase
+                .from('companies')
+                .select('id')
+                .eq('owner_id', user.id)
+                .single();
+
+            if (!company) return;
+
+            const response = await fetch('/api/grants/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ companyId: company.id }),
+            });
+
+            if (!response.ok) throw new Error('Error al buscar ayudas');
+
+            const data = await response.json();
+            setAiSuggestions(data.suggestions || []);
+        } catch (error) {
+            console.error('Error discovering grants:', error);
+        } finally {
+            setDiscovering(false);
         }
     };
 
@@ -122,8 +163,8 @@ export default function GrantsPage() {
                 </div>
 
                 {/* Search & Filter Bar */}
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex gap-4">
-                    <div className="relative flex-1">
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="relative flex-1 w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
@@ -131,14 +172,65 @@ export default function GrantsPage() {
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                         />
                     </div>
-                    <select className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900">
-                        <option value="all">Todas las categorías</option>
-                        <option value="innovation">Innovación</option>
-                        <option value="digital">Digitalización</option>
-                        <option value="sustainability">Sostenibilidad</option>
-                        <option value="hiring">Contratación</option>
-                    </select>
+                    <div className="flex gap-4 w-full md:w-auto">
+                        <select className="border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-900 flex-1 md:flex-none">
+                            <option value="all">Todas las categorías</option>
+                            <option value="innovation">Innovación</option>
+                            <option value="digital">Digitalización</option>
+                            <option value="sustainability">Sostenibilidad</option>
+                            <option value="hiring">Contratación</option>
+                        </select>
+                        <button
+                            onClick={discoverNewGrants}
+                            disabled={discovering}
+                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center whitespace-nowrap"
+                        >
+                            {discovering ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Buscando ayudas...
+                                </>
+                            ) : (
+                                <>
+                                    <Search className="w-4 h-4 mr-2" />
+                                    Descubrir ayudas
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
+
+                {/* AI Suggestions Section */}
+                {aiSuggestions.length > 0 && (
+                    <div className="mb-8">
+                        <div className="flex items-center gap-2 mb-4">
+                            <TrendingUp className="w-5 h-5 text-indigo-600" />
+                            <h2 className="text-lg font-semibold text-gray-900">Sugerencias detectadas por IA</h2>
+                            <button
+                                onClick={() => setAiSuggestions([])}
+                                className="text-xs text-gray-500 hover:text-gray-700 ml-auto"
+                            >
+                                Limpiar resultados
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {aiSuggestions.map((suggestion, idx) => (
+                                <div key={idx} className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 p-5 rounded-lg shadow-sm">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <h3 className="font-bold text-indigo-900">{suggestion.title}</h3>
+                                        <span className="text-xs font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded">NUEVA</span>
+                                    </div>
+                                    <p className="text-xs text-indigo-700 mb-2 font-medium">{suggestion.issuer}</p>
+                                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{suggestion.description}</p>
+                                    <div className="flex justify-between items-center mt-auto">
+                                        <span className="text-sm font-semibold text-green-700">{suggestion.estimated_amount}</span>
+                                        <span className="text-xs italic text-gray-500">Match: {suggestion.match_reason}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-6">
                     {grants.map((item) => (
