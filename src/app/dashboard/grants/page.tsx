@@ -28,6 +28,15 @@ interface GrantOpportunity {
         application_deadline: string | null;
         funding_type: string;
     };
+    match_data?: {
+        score_breakdown: any[];
+        impact_estimation: {
+            estimated_amount: number;
+            min_amount: number;
+            max_amount: number;
+        };
+        explanations: string[];
+    };
 }
 
 export default function GrantsPage() {
@@ -163,6 +172,24 @@ export default function GrantsPage() {
                                 <p className="text-gray-600 mb-4 line-clamp-2">
                                     {item.grant.description}
                                 </p>
+
+                                {/* Explanations & Estimation */}
+                                {item.match_data && (
+                                    <div className="mb-4 bg-blue-50 p-3 rounded-md text-sm text-blue-900">
+                                        <p className="font-semibold mb-1">Por qué te encaja:</p>
+                                        <ul className="list-disc list-inside space-y-1 text-blue-800">
+                                            {item.match_data.explanations?.slice(0, 3).map((exp, idx) => (
+                                                <li key={idx}>{exp}</li>
+                                            ))}
+                                        </ul>
+                                        {item.match_data.impact_estimation?.estimated_amount > 0 && (
+                                            <div className="mt-2 pt-2 border-t border-blue-200 flex items-center font-bold text-blue-700">
+                                                <TrendingUp className="w-4 h-4 mr-2" />
+                                                Estimación: ~{item.match_data.impact_estimation.estimated_amount.toLocaleString('es-ES')} €
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="flex flex-wrap gap-6 text-sm">
                                     {item.grant.max_amount && (
