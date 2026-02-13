@@ -43,6 +43,9 @@ export async function GET(request: Request) {
 
         // 5. Run Matching
         for (const company of (companies as Company[])) {
+            console.log(`[Cron] Processing company: ${company.name} (${company.id})`);
+
+            // --- GRANTS MATCHING ---
             for (const grant of (grants as Grant[])) {
                 const result = engine.evaluate(company, grant);
 
@@ -54,12 +57,25 @@ export async function GET(request: Request) {
                         grant_id: grant.id,
                         match_score: result.total_score,
                         match_data: result.match_details,
-                        status: 'opportunity', // Reset status or keep existing? 
-                        // Ideally we should check if it exists to preserve status, but for this MVP let's do upsert.
-                        // "ON CONFLICT (company_id, grant_id) DO UPDATE SET match_score = EXCLUDED.match_score, match_data = EXCLUDED.match_data"
-                        updated_at: new Date().toISOString() // Assuming there is an updated_at column or trigger handles it
+                        status: 'opportunity',
+                        updated_at: new Date().toISOString()
                     });
                 }
+            }
+
+            // --- COMPLIANCE MATCHING (Scanning for Irregularities) ---
+            // We use the static method from the matching engine utility if available, 
+            // or implement the scanning here.
+            try {
+                // Here we simulate the "irregularities scan" by matching requirements
+                // and then refreshing the alerts which creates the actionable items.
+                await fetch(`${request.url.split('/api/')[0]}/api/alerts/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyId: company.id })
+                });
+            } catch (alertError) {
+                console.error(`[Cron] Error refreshing alerts for ${company.id}:`, alertError);
             }
         }
 
