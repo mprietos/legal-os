@@ -20,6 +20,7 @@ const mockCompany: Company = {
     plan: 'pro',
     owner_id: 'user-1',
     managed_by: null,
+    credits: 3,
     cnae_code: '6201',
     cnae_description: 'Actividades de programación informática'
 };
